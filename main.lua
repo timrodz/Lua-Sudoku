@@ -1,5 +1,5 @@
 -- Graphics
-img_grid = nil
+img_UI = nil
 font = nil
 tileSize = 66
 xOffset, yOfsset = 24, 24
@@ -10,21 +10,27 @@ gridSize = 9
 hasFinished = false
 
 function love.load()
-	img_grid = love.graphics.newImage('assets/grid.png');
+	img_UI = love.graphics.newImage('assets/img_UI.png');
 	font = love.graphics.newFont('assets/font.otf', 30)
 	InitializeGrid(0)
-	Solve()
+	if (Solve(grid)) then
+		print("SOLVED")
+	else
+		print("NOT SOLVED")
+	end
 end
 
 function love.draw()
 
 	love.graphics.setFont(font)
 
-	love.graphics.setColor(255, 255, 255, 255)
-	love.graphics.draw(img_grid, 0, 0)
+	love.graphics.setBackgroundColor(222, 94, 94, 255)
 
-	love.graphics.setColor(0, 0, 0, 255)
+	love.graphics.setColor(255,255,255,255)
+	love.graphics.draw(img_UI, 0, 0)
+	love.graphics.setColor(50, 50, 50, 255)
 
+	-- Print the grid
 	for i = 1, gridSize do
 
 		for j = 1, gridSize do
@@ -72,13 +78,13 @@ function InitializeGrid(seed)
 
 	for i = 1, gridSize do
 
-			grid[i] = {}
+		grid[i] = {}
 
-			for j = 1, gridSize do
-				grid[i][j] = 0
-			end
-
+		for j = 1, gridSize do
+			grid[i][j] = 0
 		end
+
+	end
 
 	-- Default seed
 	if (seed == 0) then
@@ -89,6 +95,7 @@ function InitializeGrid(seed)
 		grid[4][1] = 4
 		grid[6][1] = 6
 		grid[9][1] = 7
+		grid[2][1] = 1
 
 		-- Second line
 		grid[7][2] = 4
@@ -147,52 +154,45 @@ function InitializeGrid(seed)
 
 end
 
-function Solve()
+function IsSolved(grid)
 
-	local tg = {}
+	for row = 1, 9 do
 
-	for i = 1, gridSize do
+		for col = 1, 9 do
 
-		tg[i] = {}
-
-		for j = 1, gridSize do
-
-			tg[i][j] = grid[i][j]
+			if (grid[row][col] == 0) then
+				return false, row, col
+			end
 
 		end
 
 	end
 
-	for row = 1, gridSize do
+	return true
 
-		for col = 1, gridSize do
+end
 
-			-- Try all the numbers
-			for i = 1, gridSize do
+function Solve(grid)
 
-			-- Check if the grid is empty
-				if (grid[i][j] == 0) then
+	local hasFoundSolution, row, col = IsSolved(grid)
 
-				-- The grid is not empty
-				else
+	if (hasFoundSolution) then
+		return true
+	end
 
-				end -- The grid is not empty
+	for i = 1, 9 do
 
+		if (CheckPlacement(grid, row, col, i)) then
+			grid[row][col] = i
+			if (Solve(grid)) then
+				return true
 			end
-			-- break
-
-		end -- j
-
-		-- break
-		print("---------------------------------")
-
-		if (hasFinished) then
-			break
+			grid[row][col] = 0
 		end
 
-	end -- i
+	end
 
-	PrintSolution(tg, grid)
+	return false
 
 end
 
@@ -213,7 +213,7 @@ function CheckRow(grid, row, val)
 
 		if (grid[row][col] == val) then
 
-			print("Row #" .. row .. ": duplicate of value " .. val .. " (" .. row .. ", " .. col .. ") found at (" .. row .. ", " .. col .. ")")
+			-- print("Row #" .. row .. ": duplicate of value " .. val .. " (" .. row .. ", " .. col .. ") found at (" .. row .. ", " .. col .. ")")
 			return false
 
 		end
@@ -230,7 +230,7 @@ function CheckCol(grid, col, val)
 
 		if (grid[row][col] == val) then
 
-			print("Col #" .. col .. ": duplicate of value " .. val .. " (" .. row .. ", " .. col .. ") found at (" .. row .. ", " .. col .. ")")
+			-- print("Col #" .. col .. ": duplicate of value " .. val .. " (" .. row .. ", " .. col .. ") found at (" .. row .. ", " .. col .. ")")
 			return false
 
 		end
@@ -246,54 +246,27 @@ function CheckBox(grid, row, col, val)
 	xCheck = 1
 	yCheck = 1
 
-	if (x > 6) then xCheck = 7
-	elseif (x > 3) then xCheck = 4
+	if (row > 6) then xCheck = 7
+	elseif (row > 3) then xCheck = 4
 	end
 
-	if (y > 6) then yCheck = 7
-	elseif (y > 3) then yCheck = 4
+	if (col > 6) then yCheck = 7
+	elseif (col > 3) then yCheck = 4
 	end
-
-	print("Checking the value " .. val .. " (" .. row .. ", " .. col .. ") at box (" .. xCheck .. ", " .. yCheck .. ")");
 
 	for i = xCheck, xCheck + 2 do
 
 		for j = yCheck, yCheck + 2 do
 
-			-- if (
-			-- 	(i ~= x and j ~= y)		-- Not the same space where the value is
-			-- 	or (i ~=x and j == y) 	-- Same y but different x
-			-- 	or (i == x and j ~= y)) -- Same x but different y
-			-- 	then
+			if (grid[i][j] == val) then
 
-				if (grid[i][j] == val) then
+				return false
 
-					print("Box: Found duplicate at (" .. i .. ", " .. j .. ")")
-					return false
-
-				end
-
-			-- end
+			end
 
 		end
 	end
 
 	return true
-
-end
-
-function PrintSolution(src)
-
-	print("Printing solution")
-
-	for i = 1, gridSize do
-
-		for j = 1, gridSize do
-
-			grid[i][j] = src[i][j]
-
-		end
-
-	end
 
 end
