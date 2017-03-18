@@ -6,26 +6,36 @@ xOffset, yOfsset = 24, 24
 
 -- Math
 grid = {}
+answer = {}
 gridSize = 9
-hasFinished = false
+
+currentSeed = 0
+
+-- Initialize the grids
+	for row = 1, gridSize do
+
+		grid[row] = {}
+		answer[row] = {}
+
+		for col = 1, gridSize do
+		
+			grid[row][col] = 0
+			answer[row][col] = 0
+		
+		end
+
+	end
+	
 
 function love.load()
 	img_UI = love.graphics.newImage('assets/img_UI.png');
 	font = love.graphics.newFont('assets/font.otf', 30)
-	InitializeGrid(0)
-	if (Solve(grid)) then
-		print("SOLVED")
-	else
-		print("NOT SOLVED")
-	end
 end
 
 function love.draw()
 
 	love.graphics.setFont(font)
-
 	love.graphics.setBackgroundColor(222, 94, 94, 255)
-
 	love.graphics.setColor(255,255,255,255)
 	love.graphics.draw(img_UI, 0, 0)
 	love.graphics.setColor(50, 50, 50, 255)
@@ -66,94 +76,129 @@ function love.draw()
 end
 
 function love.update(dt)
-
-	if love.keyboard.isDown('space') then
-		-- InitializeGrid(0)
-		-- Solve()
+	
+	local x, y = love.mouse.getPosition()
+	
+	if (love.mouse.isDown(1)) then
+		
+		-- Check button
+		if ((x >= 619 and x <= 741) and (y >= 19 and y <= 52)) then
+			CompareAnswers()
+		-- Seed button
+		elseif ((x >= 619 and x <= 741) and (y >= 67 and y <= 100)) then
+			InitializeGrid(love.math.random(0, 1))
+		-- Reset button
+		elseif ((x >= 760 and x <= 882) and (y >= 19 and y <= 52)) then
+			InitializeGrid(currentSeed)
+		-- Solve button
+		elseif ((x >= 760 and x <= 882) and (y >= 67 and y <= 100)) then
+			Solve(grid)
+		-- Easy Difficulty
+		elseif ((x >= 760 and x <= 882) and (y >= 115 and y <= 148)) then
+			TransformGrid("easy")
+		-- Medium Difficulty
+		elseif ((x >= 760 and x <= 882) and (y >= 163 and y <= 196)) then
+			TransformGrid("medium")
+		-- Hard Difficulty
+		elseif ((x >= 760 and x <= 882) and (y >= 211 and y <= 244)) then
+			TransformGrid("hard")
+		end
+		
+		return
+	
 	end
 
 end
 
 function InitializeGrid(seed)
 
-	for i = 1, gridSize do
+	currentSeed = seed
 
-		grid[i] = {}
+	-- Initialize the grids
+	for row = 1, gridSize do
 
-		for j = 1, gridSize do
-			grid[i][j] = 0
+		for col = 1, gridSize do
+		
+			grid[row][col] = 0
+			answer[row][col] = 0
+		
 		end
 
 	end
 
-	-- Default seed
+	-- Default seed, given in the summative brief
 	if (seed == 0) then
 
-		-- Set the values of the grid
 		-- First line
-		grid[1][1] = 8
-		grid[4][1] = 4
-		grid[6][1] = 6
-		grid[9][1] = 7
-		grid[2][1] = 1
+		answer[1][1] = 8
+		answer[4][1] = 4
+		answer[6][1] = 6
+		answer[9][1] = 7
 
 		-- Second line
-		grid[7][2] = 4
+		answer[7][2] = 4
 
 		-- Third line
-		grid[2][3] = 1
-		grid[7][3] = 6
-		grid[8][3] = 5
+		answer[2][3] = 1
+		answer[7][3] = 6
+		answer[8][3] = 5
 
 		-- Fourth line
-		grid[1][4] = 5
-		grid[3][4] = 9
-		grid[5][4] = 3
-		grid[7][4] = 7
-		grid[8][4] = 8
+		answer[1][4] = 5
+		answer[3][4] = 9
+		answer[5][4] = 3
+		answer[7][4] = 7
+		answer[8][4] = 8
 
 		-- Fifth line
-		grid[5][5] = 7
+		answer[5][5] = 7
 
 		-- Sixth line
-		grid[2][6] = 4
-		grid[3][6] = 8
-		grid[5][6] = 2
-		grid[7][6] = 1
-		grid[9][6] = 3
+		answer[2][6] = 4
+		answer[3][6] = 8
+		answer[5][6] = 2
+		answer[7][6] = 1
+		answer[9][6] = 3
 
 		-- Seventh line
-		grid[2][7] = 5
-		grid[3][7] = 2
-		grid[8][7] = 9
+		answer[2][7] = 5
+		answer[3][7] = 2
+		answer[8][7] = 9
 
 		-- Eigth line
-		grid[3][8] = 1
+		answer[3][8] = 1
 
 		-- Ninth line
-		grid[1][9] = 3
-		grid[4][9] = 9
-		grid[6][9] = 2
-		grid[9][9] = 5
+		answer[1][9] = 3
+		answer[4][9] = 9
+		answer[6][9] = 2
+		answer[9][9] = 5
 
 	elseif (seed == 1) then
-
-		n = 3
-
-		for i = 1, n*n do
-
-			for j = 1, n*n do
-
-				grid[i][j] = (i * n + i/n + j - 3) % ((n*n) - 1)
-
-			end
-
-		end
+	
+		
 
 	end
+	
+	-- CAN BE SKIPPED
+	-- Make the answer grid be equal to the solving grid
+	-- for row = 1, gridSize do
+
+	-- 	for col = 1, gridSize do
+		
+	-- 		answer[row][col] = grid[row][col]
+		
+	-- 	end
+
+	-- end
+	
+	-- Solve it and use it as comparison
+	Solve(answer)
 
 end
 
+-- Check whether or not the puzzle has been solved
+-- If any space has a value of 0 (empty), puzzle is not yet solved
 function IsSolved(grid)
 
 	for row = 1, 9 do
@@ -172,6 +217,7 @@ function IsSolved(grid)
 
 end
 
+-- Solve the given puzzle (if possible)
 function Solve(grid)
 
 	local hasFoundSolution, row, col = IsSolved(grid)
@@ -196,6 +242,7 @@ function Solve(grid)
 
 end
 
+-- Perform the row, column and box check at once
 function CheckPlacement(grid, row, col, val)
 
 	return (
@@ -206,14 +253,13 @@ function CheckPlacement(grid, row, col, val)
 
 end
 
-
+-- Checks for repetitions in the row
 function CheckRow(grid, row, val)
 
 	for col = 1, gridSize do
 
 		if (grid[row][col] == val) then
 
-			-- print("Row #" .. row .. ": duplicate of value " .. val .. " (" .. row .. ", " .. col .. ") found at (" .. row .. ", " .. col .. ")")
 			return false
 
 		end
@@ -224,13 +270,13 @@ function CheckRow(grid, row, val)
 
 end
 
+-- Checks for repetitions in the column
 function CheckCol(grid, col, val)
 
 	for row = 1, gridSize do
 
 		if (grid[row][col] == val) then
 
-			-- print("Col #" .. col .. ": duplicate of value " .. val .. " (" .. row .. ", " .. col .. ") found at (" .. row .. ", " .. col .. ")")
 			return false
 
 		end
@@ -241,6 +287,7 @@ function CheckCol(grid, col, val)
 
 end
 
+-- Checks for repetitions inside the current box
 function CheckBox(grid, row, col, val)
 
 	xCheck = 1
@@ -268,5 +315,63 @@ function CheckBox(grid, row, col, val)
 	end
 
 	return true
+
+end
+
+-- Determines whether or not the grids are solved
+function CompareAnswers()
+
+	for row = 1, gridSize do
+	
+		for col = 1, gridSize do
+	
+			if (grid[row][col] ~= answer[row][col]) then
+				
+				print("Not solved")
+				return false
+				
+			end
+		
+		end
+	
+	end
+	
+	print("Correctly Solved")
+	return true
+
+end
+
+-- Swap the grid values once it's been solved
+function TransformGrid(type)
+
+	InitializeGrid(currentSeed)
+
+	if (type == "easy") then
+	
+		for row = 1, gridSize do
+		
+			for col = 1, gridSize do
+		
+				if (love.math.random(0, 2) == 1) then
+					grid[row][col] = answer[row][col]
+				end
+			
+			end
+		
+		end
+	
+	elseif (type == "medium") then
+
+		
+
+	elseif (type == "hard") then
+
+
+
+	else
+
+
+
+	end
 
 end
