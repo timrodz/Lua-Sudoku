@@ -8,8 +8,11 @@ xOffset, yOfsset = 24, 24
 grid = {}
 answer = {}
 gridSize = 9
-
 currentSeed = 0
+
+-- Mouse clicking
+mouseClickTimer = 0
+canClick = true
 
 -- Initialize the grids
 for row = 1, gridSize do
@@ -35,7 +38,6 @@ end
 function love.draw()
 
 	love.graphics.setFont(font)
-	love.graphics.setBackgroundColor(222, 94, 94, 255)
 	love.graphics.setColor(255,255,255,255)
 	love.graphics.draw(img_UI, 0, 0)
 	love.graphics.setColor(50, 50, 50, 255)
@@ -80,22 +82,34 @@ function love.update(dt)
 	local x, y = love.mouse.getPosition()
 	
 	if (love.mouse.isDown(1)) then
+	
+		if (not canClick) then
+			return
+		end
 		
 		-- Check for grid clicks
-		if (x <= 600) then
-			PlaceValue(x, y)
+		if ((x <= 600)) then
+			PlaceValue(x, y, true)
 		-- Check button
 		elseif ((x >= 619 and x <= 741) and (y >= 19 and y <= 52)) then
+			print("-- Check Button")
 			CompareAnswers()
 		-- Seed button
 		elseif ((x >= 619 and x <= 741) and (y >= 67 and y <= 100)) then
-			InitializeGrid(love.math.random(0, 1))
+			print("-- Seed Button")
+			-- InitializeGrid(1)
 		-- Reset button
 		elseif ((x >= 760 and x <= 882) and (y >= 19 and y <= 52)) then
-			InitializeGrid(currentSeed)
+			print("-- Reset Button")
+			InitializeGrid(0)
 		-- Solve button
 		elseif ((x >= 760 and x <= 882) and (y >= 67 and y <= 100)) then
-			Solve(grid)
+			print("-- Solve Button")
+			if (not Solve(grid)) then
+				print("NOT SOLVABLE")
+			else 
+				print("SOLVED")
+			end
 		-- Easy Difficulty
 		elseif ((x >= 760 and x <= 882) and (y >= 115 and y <= 148)) then
 			TransformGrid("easy")
@@ -107,8 +121,23 @@ function love.update(dt)
 			TransformGrid("hard")
 		end
 		
-		return
+		canClick = false
+		
+	elseif (love.mouse.isDown(1)) then
 	
+		if ((x <= 600)) then
+			PlaceValue(x, y, false)
+		end
+	
+	end
+	
+	if (not canClick) then
+		mouseClickTimer = mouseClickTimer + love.timer.getDelta()
+	end
+	
+	if (mouseClickTimer > 0.05) then
+		mouseClickTimer = 0
+		canClick = true
 	end
 
 end
@@ -179,7 +208,15 @@ function InitializeGrid(seed)
 
 	elseif (seed == 1) then
 	
+		for row = 1, 3 do
+			
+			for col = 1, 3 do
+			
+				
+			
+			end
 		
+		end
 
 	end
 	
@@ -346,7 +383,8 @@ end
 
 -- Swap the grid values once it's been solved
 function TransformGrid(type)
-
+	
+	print("Transforming the grid - Type:" .. type .. " - Seed: " .. currentSeed)
 	InitializeGrid(currentSeed)
 
 	if (type == "easy") then
@@ -365,11 +403,31 @@ function TransformGrid(type)
 	
 	elseif (type == "medium") then
 
+		for row = 1, gridSize do
 		
+			for col = 1, gridSize do
+		
+				if (love.math.random(0, 2) == 1) then
+					grid[row][col] = answer[row][col]
+				end
+			
+			end
+		
+		end
 
 	elseif (type == "hard") then
 
-
+		for row = 1, gridSize do
+		
+			for col = 1, gridSize do
+		
+				if (love.math.random(0, 4) == 1) then
+					grid[row][col] = answer[row][col]
+				end
+			
+			end
+		
+		end
 
 	else
 
@@ -379,8 +437,8 @@ function TransformGrid(type)
 
 end
 
--- Place a number in any position
-function PlaceValue(x, y)
+-- Place a number in any position from the mouse click
+function PlaceValue(x, y, goUp)
 	
 	for row = 1, gridSize do
 	
@@ -390,12 +448,26 @@ function PlaceValue(x, y)
 			if ((x < (tileSize * row)) and (x > (tileSize * (row - 1))) and
 				(y < (tileSize * col)) and (y > (tileSize * (col - 1)))) then
 				
-				-- If it is, increment the value of the current grid
-				grid[row][col] = grid[row][col] + 1;
+				if (goUp) then
 				
-				-- If the value exceeds 9, reset it to 0
-				if (grid[row][col] >= 10) then
-					grid[row][col] = 1
+					-- If it is, increment the value of the current grid
+					grid[row][col] = grid[row][col] + 1;
+					
+					-- If the value exceeds 9, reset it to 0
+					if (grid[row][col] >= 10) then
+						grid[row][col] = 1
+					end
+				
+				else
+				
+					-- If it is, increment the value of the current grid
+					grid[row][col] = grid[row][col] - 1;
+					
+					-- If the value exceeds 9, reset it to 0
+					if (grid[row][col] <= 0) then
+						grid[row][col] = 9
+					end
+				
 				end
 				
 			end
