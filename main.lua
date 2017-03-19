@@ -12,19 +12,19 @@ gridSize = 9
 currentSeed = 0
 
 -- Initialize the grids
-	for row = 1, gridSize do
+for row = 1, gridSize do
 
-		grid[row] = {}
-		answer[row] = {}
+	grid[row] = {}
+	answer[row] = {}
 
-		for col = 1, gridSize do
-		
-			grid[row][col] = 0
-			answer[row][col] = 0
-		
-		end
-
+	for col = 1, gridSize do
+	
+		grid[row][col] = 0
+		answer[row][col] = 0
+	
 	end
+
+end
 	
 
 function love.load()
@@ -81,8 +81,11 @@ function love.update(dt)
 	
 	if (love.mouse.isDown(1)) then
 		
+		-- Check for grid clicks
+		if (x <= 600) then
+			PlaceValue(x, y)
 		-- Check button
-		if ((x >= 619 and x <= 741) and (y >= 19 and y <= 52)) then
+		elseif ((x >= 619 and x <= 741) and (y >= 19 and y <= 52)) then
 			CompareAnswers()
 		-- Seed button
 		elseif ((x >= 619 and x <= 741) and (y >= 67 and y <= 100)) then
@@ -352,7 +355,7 @@ function TransformGrid(type)
 		
 			for col = 1, gridSize do
 		
-				if (love.math.random(0, 2) == 1) then
+				if (love.math.random(0, 1) == 1) then
 					grid[row][col] = answer[row][col]
 				end
 			
@@ -372,6 +375,33 @@ function TransformGrid(type)
 
 
 
+	end
+
+end
+
+-- Place a number in any position
+function PlaceValue(x, y)
+	
+	for row = 1, gridSize do
+	
+		for col = 1, gridSize do
+	
+			-- Check that the position of the mouse is inside the correct tile
+			if ((x < (tileSize * row)) and (x > (tileSize * (row - 1))) and
+				(y < (tileSize * col)) and (y > (tileSize * (col - 1)))) then
+				
+				-- If it is, increment the value of the current grid
+				grid[row][col] = grid[row][col] + 1;
+				
+				-- If the value exceeds 9, reset it to 0
+				if (grid[row][col] >= 10) then
+					grid[row][col] = 1
+				end
+				
+			end
+		
+		end
+	
 	end
 
 end
