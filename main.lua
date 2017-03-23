@@ -165,6 +165,7 @@ function love.update(dt)
 			isSolving = true
 			if (Solve(gameGrid)) then
 				outputText = "Solved"
+				CopyGrid(gameGrid, answerGrid)
 			else 
 				isShaking = true
 				outputText = "Not solvable!"
@@ -274,8 +275,9 @@ function InitializeGrid(seed)
 		originalGrid[9][9] = 5
 
 	elseif (seed == 1) then
-	
-		val = 1
+		
+		local rand = love.math.random
+		local val = 1
 	
 		for row = 1, 3 do
 		
@@ -287,8 +289,12 @@ function InitializeGrid(seed)
 			end
 			
 		end
-		
-		ShuffleGridBox(originalGrid)
+	
+		-- Shuffle the values
+		for i = 3, 2, -1 do
+			j = rand(i)
+			grid[i], grid[j] = grid[j], grid[i]
+		end
 
 	end
 	
@@ -300,18 +306,7 @@ function InitializeGrid(seed)
 
 end
 
--- Shuffles the grid
-function ShuffleGridBox(grid)
-
-	local rand = love.math.random
-	
-	for i = 3, 2, -1 do
-		j = rand(i)
-		grid[i], grid[j] = grid[j], grid[i]
-	end
-	
-end
-
+-- Copies the content of the source to the destination grid
 function CopyGrid(src, dst)
 
 	for row = 1, gridSize do
