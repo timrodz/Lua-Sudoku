@@ -281,7 +281,7 @@ function InitializeGrid(seed)
 		-- Shuffle the values
 		for i = 3, 2, -1 do
 			j = rand(i)
-			grid[i], grid[j] = grid[j], grid[i]
+			originalGrid[i], originalGrid[j] = originalGrid[j], originalGrid[i]
 		end
 
 	end
