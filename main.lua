@@ -11,8 +11,6 @@ gameGrid = {}
 originalGrid = {}
 resetGrid = {}
 answerGrid = {}
-solvingCancelTimer = 0
-isSolving = false
 
 -- Mouse clicking
 mouseClickTimer = 0
@@ -121,16 +119,6 @@ function love.update(dt)
 	if (shakeTime > shakeDuration) then
 		shakeTime = 0
 		isShaking = false
-	end
-	
-	if (isSolving) then
-		solvingCancelTimer = solvingCancelTimer + love.timer.getDelta()
-	end
-	
-	if (solvingCancelTimer > 1.5) then
-		print("Stopped solving")
-		solvingCancelTimer = 0
-		isSolving = false
 	end
 	
 	local x, y = love.mouse.getPosition()
