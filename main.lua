@@ -6,6 +6,8 @@ tileSize = 66
 xOffset, yOfsset = 24, 24
 
 -- Grid
+solveAttempts = 0
+MAX_SOLVE_ATTEMPTS = 100000
 gridSize = 9
 gameGrid = {}
 originalGrid = {}
@@ -36,20 +38,105 @@ for row = 1, gridSize do
 	answerGrid[row] = {}
 
 	for col = 1, gridSize do
-	
+
 		gameGrid[row][col] = 0
 		originalGrid[row][col] = 0
 		resetGrid[row][col] = 0
 		answerGrid[row][col] = 0
-	
+
 	end
 
-end	
+end
 
 function love.load()
 	img_UI = love.graphics.newImage("assets/img_UI.png")
 	font_grid = love.graphics.newFont("assets/MarketFresh.otf", 30)
 	font_UI = love.graphics.newFont("assets/BebasNeue.otf", 24)
+end
+
+function love.update(dt)
+
+	if (shakeTime > shakeDuration) then
+		shakeTime = 0
+		isShaking = false
+	end
+
+	local x, y = love.mouse.getPosition()
+
+	if (love.mouse.isDown(1)) then
+
+		if (not canClick) then
+			return
+		end
+
+		-- Check for gameGrid clicks
+		if ((x <= 600)) then
+			PlaceValue(x, y, true)
+		-- Check button
+		elseif ((x >= 619 and x <= 741) and (y >= 19 and y <= 52)) then
+			if (CheckSolution()) then
+				outputText = "Correct solution.\nCongratulations!"
+			else
+				isShaking = true
+				outputText = "Incorrect solution.\nKeep trying!"
+			end
+		-- Seed button
+		elseif ((x >= 619 and x <= 741) and (y >= 67 and y <= 100)) then
+			outputText = "Grid set to the summative's\nexample."
+			TransformGrid("exercise", 0)
+		-- Reset button
+		elseif ((x >= 760 and x <= 882) and (y >= 19 and y <= 52)) then
+			outputText = "Grid has been reset"
+			CopyGrid(resetGrid, gameGrid)
+		-- Solve button
+		elseif ((x >= 760 and x <= 882) and (y >= 67 and y <= 100)) then
+			isSolving = true
+			isShaking = true
+			if (Solve(gameGrid)) then
+				outputText = "Solved!"
+				CopyGrid(gameGrid, answerGrid)
+			else
+				outputText = "Not solvable!"
+			end
+			solveAttempts = 0
+			print("Solve Attempts: " .. solveAttempts)
+		-- Easy Difficulty
+		elseif ((x >= 760 and x <= 882) and (y >= 115 and y <= 148)) then
+			outputText = "Mode: Easy"
+			TransformGrid("easy", 1)
+		-- Medium Difficulty
+		elseif ((x >= 760 and x <= 882) and (y >= 163 and y <= 196)) then
+			outputText = "Mode: Medium"
+			TransformGrid("medium", 1)
+		-- Hard Difficulty
+		elseif ((x >= 760 and x <= 882) and (y >= 211 and y <= 244)) then
+			outputText = "Mode: Hard"
+			TransformGrid("hard", 1)
+		end
+
+		canClick = false
+
+	elseif (love.mouse.isDown(1)) then
+
+		if ((x <= 600)) then
+			PlaceValue(x, y, false)
+		end
+
+	end
+
+	if (not canClick) then
+		mouseClickTimer = mouseClickTimer + love.timer.getDelta()
+	end
+
+	if (mouseClickTimer > 0.05) then
+		mouseClickTimer = 0
+		canClick = true
+	end
+
+	if (isShaking) then
+		shakeTime = shakeTime + love.timer.getDelta()
+	end
+
 end
 
 function love.draw()
@@ -60,14 +147,14 @@ function love.draw()
 		local dy = love.math.random(-shakeMagnitude, shakeMagnitude)
 		love.graphics.translate(dx, dy)
 	end
-	
+
 	-- Draw the background, gameGrid and UI
 	love.graphics.setBackgroundColor(84, 91, 102, 255)
 	love.graphics.setColor(255,255,255,255)
 	love.graphics.draw(img_UI, 0, 0)
-	
+
 	love.graphics.setFont(font_grid)
-	
+
 	-- Print the gameGrid
 	for i = 1, gridSize do
 
@@ -97,104 +184,20 @@ function love.draw()
 				love.graphics.setColor(50, 50, 50, 255)
 				love.graphics.print(gameGrid[i][j], xOffset + ((i - 1) * tileSize), yOfsset + ((j - 1) * tileSize))
 			end
-			
+
 			if (resetGrid[i][j] > 0) then
 				love.graphics.setColor(96, 91, 151, 255)
 				love.graphics.print(resetGrid[i][j], xOffset + ((i - 1) * tileSize), yOfsset + ((j - 1) * tileSize))
 			end
 
 		end
-		
+
 	end
-	
+
 	-- Print to the output
 	love.graphics.setColor(50, 50, 50, 255)
 	love.graphics.setFont(font_UI)
 	love.graphics.print(outputText, 624, 260)
-
-end
-
-function love.update(dt)
-
-	if (shakeTime > shakeDuration) then
-		shakeTime = 0
-		isShaking = false
-	end
-	
-	local x, y = love.mouse.getPosition()
-	
-	if (love.mouse.isDown(1)) then
-		
-		if (not canClick) then
-			return
-		end
-		
-		-- Check for gameGrid clicks
-		if ((x <= 600)) then
-			PlaceValue(x, y, true)
-		-- Check button
-		elseif ((x >= 619 and x <= 741) and (y >= 19 and y <= 52)) then
-			if (CheckSolution()) then
-				outputText = "Correct solution.\nCongratulations!"
-			else
-				isShaking = true
-				outputText = "Incorrect solution.\nKeep trying!"
-			end
-		-- Seed button
-		elseif ((x >= 619 and x <= 741) and (y >= 67 and y <= 100)) then
-			outputText = "Grid set to the summative's\nexample."
-			TransformGrid("exercise", 0)
-		-- Reset button
-		elseif ((x >= 760 and x <= 882) and (y >= 19 and y <= 52)) then
-			outputText = "Grid has been reset"
-			CopyGrid(resetGrid, gameGrid)
-		-- Solve button
-		elseif ((x >= 760 and x <= 882) and (y >= 67 and y <= 100)) then
-			isSolving = true
-			if (Solve(gameGrid)) then
-				outputText = "Solved"
-				CopyGrid(gameGrid, answerGrid)
-			else 
-				isShaking = true
-				outputText = "Not solvable!"
-			end
-			-- isSolving = false
-		-- Easy Difficulty
-		elseif ((x >= 760 and x <= 882) and (y >= 115 and y <= 148)) then
-			outputText = "Mode: Easy"
-			TransformGrid("easy", 1)
-		-- Medium Difficulty
-		elseif ((x >= 760 and x <= 882) and (y >= 163 and y <= 196)) then
-			outputText = "Mode: Medium"
-			TransformGrid("medium", 1)
-		-- Hard Difficulty
-		elseif ((x >= 760 and x <= 882) and (y >= 211 and y <= 244)) then
-			outputText = "Mode: Hard"
-			TransformGrid("hard", 1)
-		end
-		
-		canClick = false
-		
-	elseif (love.mouse.isDown(1)) then
-	
-		if ((x <= 600)) then
-			PlaceValue(x, y, false)
-		end
-	
-	end
-	
-	if (not canClick) then
-		mouseClickTimer = mouseClickTimer + love.timer.getDelta()
-	end
-	
-	if (mouseClickTimer > 0.05) then
-		mouseClickTimer = 0
-		canClick = true
-	end
-	
-	if (isShaking) then
-		shakeTime = shakeTime + love.timer.getDelta()
-	end
 
 end
 
@@ -204,12 +207,12 @@ function InitializeGrid(seed)
 	for row = 1, gridSize do
 
 		for col = 1, gridSize do
-		
+
 			gameGrid[row][col] = 0
 			originalGrid[row][col] = 0
 			resetGrid[row][col] = 0
 			answerGrid[row][col] = 0
-		
+
 		end
 
 	end
@@ -263,21 +266,21 @@ function InitializeGrid(seed)
 		originalGrid[9][9] = 5
 
 	elseif (seed == 1) then
-		
+
 		local rand = love.math.random
 		local val = 1
-	
+
 		for row = 1, 3 do
-		
+
 			for col = 1, 3 do
-				
+
 				originalGrid[row][col] = val
 				val = val + 1
-			
+
 			end
-			
+
 		end
-	
+
 		-- Shuffle the values
 		for i = 3, 2, -1 do
 			j = rand(i)
@@ -285,10 +288,10 @@ function InitializeGrid(seed)
 		end
 
 	end
-	
+
 	-- Copy the original gameGrid to the answer gameGrid
 	CopyGrid(originalGrid, answerGrid)
-	
+
 	-- Solve the answer gameGrid
 	Solve(answerGrid)
 
@@ -300,9 +303,9 @@ function CopyGrid(src, dst)
 	for row = 1, gridSize do
 
 		for col = 1, gridSize do
-			
+
 			dst[row][col] = src[row][col]
-		
+
 		end
 
 	end
@@ -342,15 +345,23 @@ function Solve(gameGrid)
 
 		-- Check for placement
 		if (CheckPlacement(gameGrid, row, col, i)) then
-		
+
 			gameGrid[row][col] = i
-		
+
 			if (Solve(gameGrid)) then
 				return true
 			end
-		
+
 			gameGrid[row][col] = 0
-		
+			solveAttempts = solveAttempts + 1
+
+		end
+
+		-- Return false if the attempts to resolve are too much
+		if (solveAttempts >= MAX_SOLVE_ATTEMPTS) then
+
+			return false
+
 		end
 
 	end
@@ -439,78 +450,79 @@ end
 function CheckSolution()
 
 	for row = 1, gridSize do
-	
+
 		for col = 1, gridSize do
-	
+
 			if ((gameGrid[row][col] ~= answerGrid[row][col]) or (gameGrid[row][col] == answerGrid[row][col] and answerGrid[row][col] == 0)) then
-				
+
 				return false
-				
+
 			end
-		
+
 		end
-	
+
 	end
-	
+
 	return true
 
 end
 
 -- Place a number in any position from the mouse click
 function PlaceValue(x, y, goUp)
-	
+
 	for row = 1, gridSize do
-	
+
 		for col = 1, gridSize do
-	
+
 			-- Check that the position of the mouse is inside the correct tile
 			if ((x < (tileSize * row)) and (x > (tileSize * (row - 1))) and
 				(y < (tileSize * col)) and (y > (tileSize * (col - 1)))) then
-				
+
+				-- Don't edit if the value was in the original grid
 				if (resetGrid[row][col] ~= 0) then
 					return
 				end
-				
+
 				if (goUp) then
-				
+
 					-- If it is, increment the value of the current gameGrid
 					gameGrid[row][col] = gameGrid[row][col] + 1;
-					
+
 					-- If the value exceeds 9, reset it to 0
 					if (gameGrid[row][col] >= 10) then
 						gameGrid[row][col] = 1
 					end
-				
+
 				else
-				
+
 					-- If it is, increment the value of the current gameGrid
 					gameGrid[row][col] = gameGrid[row][col] - 1;
-					
+
 					-- If the value exceeds 9, reset it to 0
 					if (gameGrid[row][col] <= 0) then
 						gameGrid[row][col] = 9
 					end
-				
+
 				end
-				
+
 			end
-		
+
 		end
-	
+
 	end
 
 end
 
 -- Swap the gameGrid values once it's been solved
 function TransformGrid(type, seed)
-	
+
 	print("Transforming the gameGrid - Type: " .. type .. " - Seed: " .. seed)
 	InitializeGrid(seed)
-	
+
 	for row = 1, gridSize do
-		
+
 		for col = 1, gridSize do
-		
+
 			if (type == "easy") then
 				if (love.math.random(0, 1) == 1) then
 					gameGrid[row][col] = answerGrid[row][col]
@@ -520,17 +532,17 @@ function TransformGrid(type, seed)
 					gameGrid[row][col] = answerGrid[row][col]
 				end
 			elseif (type == "hard") then
-				if (love.math.random(0, 4) == 1) then
+				if (love.math.random(0, 3) == 1) then
 					gameGrid[row][col] = answerGrid[row][col]
 				end
 			else
 				gameGrid[row][col] = originalGrid[row][col]
 			end
-		
+
 		end
-	
+
 	end
-	
+
 	CopyGrid(gameGrid, resetGrid)
 
 end
