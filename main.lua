@@ -6,8 +6,6 @@ tileSize = 66
 xOffset, yOfsset = 24, 24
 
 -- Grid
-solveAttempts = 0
-MAX_SOLVE_ATTEMPTS = 100000
 gridSize = 9
 gameGrid = {}
 originalGrid = {}
@@ -90,16 +88,20 @@ function love.update(dt)
 			CopyGrid(resetGrid, gameGrid)
 		-- Solve button
 		elseif ((x >= 760 and x <= 882) and (y >= 67 and y <= 100)) then
-			isSolving = true
+
 			isShaking = true
-			if (Solve(gameGrid)) then
-				outputText = "Solved!"
-				CopyGrid(gameGrid, answerGrid)
-			else
+
+			if (not ValidatePositions()) then
 				outputText = "Not solvable!"
+			else
+				if (Solve(gameGrid)) then
+					outputText = "Solved!"
+					CopyGrid(gameGrid, answerGrid)
+				else
+					outputText = "Not solvable!"
+				end
 			end
-			solveAttempts = 0
-			print("Solve Attempts: " .. solveAttempts)
+
 		-- Easy Difficulty
 		elseif ((x >= 760 and x <= 882) and (y >= 115 and y <= 148)) then
 			outputText = "Mode: Easy"
@@ -344,7 +346,7 @@ function Solve(gameGrid)
 	for i = 1, 9 do
 
 		-- Check for placement
-		if (CheckPlacement(gameGrid, row, col, i)) then
+		if (CheckPlacement(gameGrid, row, col, i, true)) then
 
 			gameGrid[row][col] = i
 
@@ -353,14 +355,6 @@ function Solve(gameGrid)
 			end
 
 			gameGrid[row][col] = 0
-			solveAttempts = solveAttempts + 1
-
-		end
-
-		-- Return false if the attempts to resolve are too much
-		if (solveAttempts >= MAX_SOLVE_ATTEMPTS) then
-
-			return false
 
 		end
 
@@ -370,25 +364,62 @@ function Solve(gameGrid)
 
 end
 
+function ValidatePositions()
+
+	print("VALIDATING POSITIONS")
+
+	for row = 1, gridSize do
+
+		for col = 1, gridSize do
+
+			val = gameGrid[row][col]
+
+			if (val ~= 0 and not CheckPlacement(gameGrid, row, col, val, false)) then
+				print("NOT VALID")
+				return false
+			end
+
+		end
+
+		end
+
+	print("VALID")
+	return true
+
+end
+
 -- Perform the row, column and box check at once
-function CheckPlacement(gameGrid, row, col, val)
+function CheckPlacement(gameGrid, row, col, val, temp)
 
 	return (
-		CheckRow(gameGrid, row, val) and
-		CheckCol(gameGrid, col, val) and
-		CheckBox(gameGrid, row, col, val)
+		CheckRow(gameGrid, row, val, col, temp) and
+		CheckCol(gameGrid, col, val, row, temp) and
+		CheckBox(gameGrid, row, col, val, temp)
 		)
 
 end
 
 -- Checks for repetitions in the row
-function CheckRow(gameGrid, row, val)
+function CheckRow(gameGrid, row, val, orgCol, tmep)
 
 	for col = 1, gridSize do
 
-		if (gameGrid[row][col] == val) then
+		if (temp) then
 
-			return false
+			if (gameGrid[row][col] == val) then
+
+				return false
+
+			end
+
+		else
+
+			if (gameGrid[row][col] == val and col ~= orgCol) then
+
+				print("ROW - Value: "..val.." at "..row..", "..orgCol.." - Duplicate: "..gameGrid[row][col].." at "..row..", "..col)
+				return false
+
+			end
 
 		end
 
@@ -399,13 +430,26 @@ function CheckRow(gameGrid, row, val)
 end
 
 -- Checks for repetitions in the column
-function CheckCol(gameGrid, col, val)
+function CheckCol(gameGrid, col, val, orgRow, temp)
 
 	for row = 1, gridSize do
 
-		if (gameGrid[row][col] == val) then
+		if (temp) then
 
-			return false
+			if (gameGrid[row][col] == val) then
+
+				return false
+
+			end
+
+		else
+
+			if (gameGrid[row][col] == val and row ~= orgRow) then
+
+				print("COL - Value: "..val.." at "..row..", "..orgRow.." - Duplicate: "..gameGrid[row][col].." at "..row..", "..col)
+				return false
+
+			end
 
 		end
 
@@ -416,7 +460,7 @@ function CheckCol(gameGrid, col, val)
 end
 
 -- Checks for repetitions inside the current box
-function CheckBox(gameGrid, row, col, val)
+function CheckBox(gameGrid, row, col, val, temp)
 
 	xCheck = 1
 	yCheck = 1
@@ -433,9 +477,23 @@ function CheckBox(gameGrid, row, col, val)
 
 		for j = yCheck, yCheck + 2 do
 
-			if (gameGrid[i][j] == val) then
+			if (temp) then
 
-				return false
+				if (gameGrid[i][j] == val) then
+
+					return false
+
+				end
+
+			else
+
+				-- Check for repetition while skipping the original value
+				if (gameGrid[i][j] == val and (i ~= row and j ~= col)) then
+
+					print("BOX - Value: "..val.." at "..row..", "..col.." - Duplicate: "..gameGrid[row][col].." at "..i..", "..j)
+					return false
+
+				end
 
 			end
 
