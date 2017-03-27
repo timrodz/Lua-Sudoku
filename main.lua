@@ -54,12 +54,11 @@ end
 
 function love.update(dt)
 
+	-- Handle the screen shake
 	if (shakeTime > shakeDuration) then
 		shakeTime = 0
 		isShaking = false
 	end
-
-	local x, y = love.mouse.getPosition()
 
 	if (love.mouse.isDown(1)) then
 
@@ -67,29 +66,39 @@ function love.update(dt)
 			return
 		end
 
+		local x, y = love.mouse.getPosition()
+		isShaking = true
+
 		-- Check for gameGrid clicks
 		if ((x <= 600)) then
+
+			isShaking = false
 			PlaceValue(x, y, true)
+
 		-- Check button
 		elseif ((x >= 619 and x <= 741) and (y >= 19 and y <= 52)) then
+
 			if (CheckSolution()) then
 				outputText = "Correct solution.\nCongratulations!"
 			else
-				isShaking = true
 				outputText = "Incorrect solution.\nKeep trying!"
 			end
+
 		-- Seed button
 		elseif ((x >= 619 and x <= 741) and (y >= 67 and y <= 100)) then
+
 			outputText = "Grid set to the summative's\nexample."
 			TransformGrid("exercise", 0)
+
 		-- Reset button
 		elseif ((x >= 760 and x <= 882) and (y >= 19 and y <= 52)) then
+
 			outputText = "Grid has been reset"
 			CopyGrid(resetGrid, gameGrid)
+
 		-- Solve button
 		elseif ((x >= 760 and x <= 882) and (y >= 67 and y <= 100)) then
 
-			isShaking = true
 
 			if (not ValidatePositions()) then
 				outputText = "Not solvable!"
@@ -104,25 +113,40 @@ function love.update(dt)
 
 		-- Easy Difficulty
 		elseif ((x >= 760 and x <= 882) and (y >= 115 and y <= 148)) then
-			outputText = "Mode: Easy"
+
+			outputText = "Difficulty set to Easy.\nGood luck!"
 			TransformGrid("easy", 1)
+
 		-- Medium Difficulty
 		elseif ((x >= 760 and x <= 882) and (y >= 163 and y <= 196)) then
-			outputText = "Mode: Medium"
+
+			outputText = "Difficulty set to Medium.\nGood luck!"
 			TransformGrid("medium", 1)
+
 		-- Hard Difficulty
 		elseif ((x >= 760 and x <= 882) and (y >= 211 and y <= 244)) then
-			outputText = "Mode: Hard"
+
+			outputText = "Difficulty set to Hard.\nGood luck!"
 			TransformGrid("hard", 1)
+
 		end
 
 		canClick = false
 
-	elseif (love.mouse.isDown(1)) then
+	-- Right click
+	elseif (love.mouse.isDown(2)) then
+
+		if (not canClick) then
+			return
+		end
+
+		local x, y = love.mouse.getPosition()
 
 		if ((x <= 600)) then
 			PlaceValue(x, y, false)
 		end
+
+		canClick = false
 
 	end
 
@@ -145,9 +169,11 @@ function love.draw()
 
 	-- Screen shake
 	if (isShaking) then
+		
 		local dx = love.math.random(-shakeMagnitude, shakeMagnitude)
 		local dy = love.math.random(-shakeMagnitude, shakeMagnitude)
 		love.graphics.translate(dx, dy)
+	
 	end
 
 	-- Draw the background, gameGrid and UI
@@ -364,9 +390,9 @@ function Solve(gameGrid)
 
 end
 
+-- Checks for repetitions in the same row, column or box
+-- Returns true if valid to solve
 function ValidatePositions()
-
-	print("VALIDATING POSITIONS")
 
 	for row = 1, gridSize do
 
@@ -375,7 +401,6 @@ function ValidatePositions()
 			val = gameGrid[row][col]
 
 			if (val ~= 0 and not CheckPlacement(gameGrid, row, col, val, false)) then
-				print("NOT VALID")
 				return false
 			end
 
@@ -383,12 +408,12 @@ function ValidatePositions()
 
 		end
 
-	print("VALID")
 	return true
 
 end
 
 -- Perform the row, column and box check at once
+-- Returns true if placement is possible
 function CheckPlacement(gameGrid, row, col, val, temp)
 
 	return (
@@ -544,7 +569,7 @@ function PlaceValue(x, y, goUp)
 				if (goUp) then
 
 					-- If it is, increment the value of the current gameGrid
-					gameGrid[row][col] = gameGrid[row][col] + 1;
+					gameGrid[row][col] = gameGrid[row][col] + 1
 
 					-- If the value exceeds 9, reset it to 0
 					if (gameGrid[row][col] >= 10) then
@@ -554,7 +579,7 @@ function PlaceValue(x, y, goUp)
 				else
 
 					-- If it is, increment the value of the current gameGrid
-					gameGrid[row][col] = gameGrid[row][col] - 1;
+					gameGrid[row][col] = gameGrid[row][col] - 1
 
 					-- If the value exceeds 9, reset it to 0
 					if (gameGrid[row][col] <= 0) then
@@ -574,7 +599,6 @@ end
 -- Swap the gameGrid values once it's been solved
 function TransformGrid(type, seed)
 
-	print("Transforming the gameGrid - Type: " .. type .. " - Seed: " .. seed)
 	InitializeGrid(seed)
 
 	for row = 1, gridSize do
